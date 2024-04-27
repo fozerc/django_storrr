@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %} {% endblock %}</title>
+</head>
+<body>
+{% if messages %}
+<ul class="messages">
+    {% for message in messages %}
+    <li
+            {% if message.tags %} class="{{ message.tags }}" {% endif %}>{{ message }}
+    </li>
+    {% endfor %}
+</ul>
+{% endif %}
+<div>
+    <ul>
+        {% if user.is_authenticated %}
+            Hello {{ user.username }} your wallet - {{ user.user_wallet }}
+            <form method="post" action="{% url 'logout' %}">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="/">
+                <input type="submit" value="Logout">
+            </form>
+        {% else %}
+            <li>
+                <a href="{% url 'login' %}">Login</a>
+            </li>
+            <li>
+                <a href="{% url 'register' %}">Register</a>
+            </li>
+        {% endif %}
+    </ul>
+</div>
+<div>
+    {% if user.is_superuser %}
+        <a href="{% url 'create_product' %}">Create product</a> <br>
+        <a href="{% url 'returns_list' %}">Returns list</a>
+    {% elif user.is_authenticated %}
+        <a href="{% url 'index' %}">List of products</a> <br>
+        <a href="{% url 'profile' %}">My purchases</a>
+    {% endif %}
+</div>
+<div>
+    {% block content %}
+    {% endblock %}
+</div>
+</body>
+</html>

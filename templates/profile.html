@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% block title %}
+	Profile
+{% endblock %}
+
+{% block content %}
+	{% for purchase in object_list %}
+		Product name: {{ purchase.product.name }} <br>
+        Product price: {{ purchase.product.price }} <br>
+		Quantity: {{ purchase.quantity }} <br>
+        {% if not purchase.ret and not purchase.not_returnable %}
+        <form method="post" action="{% url 'create_return' %}">
+             {% csrf_token %}
+            <input type="hidden" name="purchase_id" value="{{ purchase.pk }}">
+            <input type="submit" value="Return">
+        </form>
+        {% endif %}
+        <br>
+	{% endfor %}
+{% endblock %}

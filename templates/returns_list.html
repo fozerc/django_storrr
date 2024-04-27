@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% block title %}
+	LIST OF RETURNS
+{% endblock %}
+
+{% block content %}
+	{% for return in object_list %}
+        Purchase from: {{ return.purchase.user.username }} <br>
+        Product: {{ return.purchase.product.name }} <br>
+        Quantity: {{ return.purchase.quantity }} <br>
+        <form method="post" action="{% url 'return_approve' return.pk %}">
+            {% csrf_token %}
+            <input type="submit" value="Approve">
+        </form>
+        <form method="post" action="{% url 'return_decline' return.pk %}">
+            {% csrf_token %}
+            <input type="submit" value="Decline">
+        </form>
+	{% endfor %}
+{% endblock %}
