@@ -14,10 +14,10 @@ class Product(models.Model):
     description = models.TextField(null=True, blank=True)
     price = models.PositiveIntegerField()
     picture = models.ImageField(upload_to='pictures', blank=True, null=True)
-    amount = models.PositiveIntegerField(default=0)
+    quantity = models.PositiveIntegerField(default=0)
 
     def __str__(self):
-        return f"Name: {self.name}, Price:  {self.price}, Amount: {self.amount}"
+        return f"Name: {self.name}, Price:  {self.price}, Amount: {self.quantity}"
 
 
 class Purchase(models.Model):

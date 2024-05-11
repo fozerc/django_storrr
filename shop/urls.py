@@ -21,8 +21,11 @@ from django.urls import path
 from django.conf.urls import include
 from django.conf import settings
 from django.conf.urls.static import static
+
+from shop_app.cart.cart import Cart
 from shop_app.views import RegisterView, ProductListView, PurchaseCreateView, ProfileListView, ReturnCreateView, \
-    ReturnApproveDeleteView, ReturnDeclineDeleteView, ProductCreateView, ReturnListView
+    ReturnApproveDeleteView, ReturnDeclineDeleteView, ProductCreateView, ReturnListView, AddToCartView, CartListView, \
+    RemoveFromCartView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -37,6 +40,9 @@ urlpatterns = [
     path('return-decline/<int:pk>/', ReturnDeclineDeleteView.as_view(), name='return_decline'),
     path('product_create/', ProductCreateView.as_view(), name='create_product'),
     path('return-list/', ReturnListView.as_view(), name='returns_list'),
+    path('add-to-cart/', AddToCartView.as_view(), name='add_to_cart'),
+    path('cart/', CartListView.as_view(), name='cart_list'),
+    path('delete-from-cart/<int:product_id>', RemoveFromCartView.as_view(), name='delete_from_cart'),
     path('api/', include('shop_app.api.urls'))
               ]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 

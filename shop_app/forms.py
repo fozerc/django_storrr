@@ -43,12 +43,12 @@ class PurchaseForm(forms.ModelForm):
         return product
 
     def check_product_quantity(self, quantity, product):
-        if quantity > product.amount:
+        if quantity > product.quantity:
             messages.error(self.request, 'Not enough quantity available')
             self.add_error(None, 'Not enough quantity available')
 
     def check_user_wallet(self, quantity, product):
-        if quantity * product.amount > self.request.user.user_wallet:
+        if quantity * product.quantity > self.request.user.user_wallet:
             messages.error(self.request, 'You have not enough money')
             self.add_error(None, 'You have not enough money')
 

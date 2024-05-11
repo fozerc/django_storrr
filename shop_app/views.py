@@ -1,9 +1,14 @@
+from django.contrib import messages
 from django.contrib.auth import login
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import transaction
 from django.http import HttpResponseRedirect
+from django.shortcuts import render, redirect
 from django.urls import reverse_lazy
+from django.views import View
 from django.views.generic import CreateView, ListView, DeleteView
+
+from shop_app.cart.cart import Cart
 from shop_app.forms import RegisterForm, PurchaseForm, ReturnForm
 from shop_app.mixins import SuperUserRequiredMixin
 from shop_app.models import Product, Purchase, Return
@@ -42,7 +47,7 @@ class PurchaseCreateView(LoginRequiredMixin, CreateView):
         product = form.product
         purchase.user = user
         purchase.product = product
-        product.amount -= purchase.quantity
+        product.quantity -= purchase.quantity
         user.user_wallet -= purchase.quantity * product.price
         with transaction.atomic():
             product.save()
@@ -79,8 +84,52 @@ class ReturnCreateView(LoginRequiredMixin, CreateView):
 
     def form_invalid(self, form):
         return HttpResponseRedirect(reverse_lazy('profile'))
-    
-    
+
+
+class AddToCartView(View, LoginRequiredMixin):
+    def post(self, request, *args, **kwargs):
+        product_id = request.POST.get('product_id')
+        quantity = request.POST.get('quantity')
+        print("aaaa")
+        try:
+            product = Product.objects.get(pk=product_id)
+        except Product.DoesNotExist:
+            messages.error(self.request, "Sorry, you're trying to add a non existent product")
+        self.check_quantity(product, quantity)
+        return HttpResponseRedirect(reverse_lazy('index'))
+
+    def check_quantity(self, product, quantity):
+        if quantity > str(product.quantity):
+            messages.error(self.request, "Sorry, not enough quantity available for this product")
+            return HttpResponseRedirect(reverse_lazy('index'))
+        else:
+            cart = Cart(self.request)
+            cart.add_to_cart(product, quantity)
+
+
+class CartListView(ListView, LoginRequiredMixin):
+    def get(self, request, *args, **kwargs):
+        cart = Cart(request)
+        products = []
+        for key, value in cart.cart.items():
+            product = Product.objects.get(id=key)
+            product.cart_quantity = value["quantity"]
+            product.cart_price = value["quantity"] * product.price
+            products.append(product)
+        return render(request, 'cart.html', {'products': products})
+
+
+class RemoveFromCartView(LoginRequiredMixin, View):
+    def post(self, request, product_id, *args, **kwargs):
+        try:
+            product = Product.objects.get(pk=product_id)
+            cart = Cart(self.request)
+            cart.remove_from_cart(product)
+        except Product.DoesNotExist:
+            messages.error(self.request, "Sorry, you're trying to remove product that doesn't exist")
+        return redirect('cart_list')
+
+
 class ReturnApproveDeleteView(SuperUserRequiredMixin, LoginRequiredMixin, DeleteView):
     queryset = Return.objects.all()
     success_url = reverse_lazy('index')
@@ -89,7 +138,7 @@ class ReturnApproveDeleteView(SuperUserRequiredMixin, LoginRequiredMixin, Delete
         ret = self.object
         product = ret.purchase.product
         user = ret.purchase.user
-        product.amount += ret.purchase.quantity
+        product.quantity += ret.purchase.quantity
         user.user_wallet += ret.purchase.quantity * product.price
         with transaction.atomic():
             user.save()
@@ -100,15 +149,15 @@ class ReturnApproveDeleteView(SuperUserRequiredMixin, LoginRequiredMixin, Delete
 class ReturnDeclineDeleteView(SuperUserRequiredMixin, LoginRequiredMixin, DeleteView):
     queryset = Return.objects.all()
     success_url = reverse_lazy('index')
-    
+
 
 class ProductCreateView(SuperUserRequiredMixin, LoginRequiredMixin, CreateView):
     model = Product
     fields = '__all__'
     template_name = 'create_product.html'
     success_url = reverse_lazy('index')
-    
-    
+
+
 class ReturnListView(SuperUserRequiredMixin, LoginRequiredMixin, ListView):
     queryset = Return.objects.all()
     template_name = 'returns_list.html'
