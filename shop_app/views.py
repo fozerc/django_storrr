@@ -7,17 +7,23 @@ from django.shortcuts import render, redirect
 from django.urls import reverse_lazy
 from django.views import View
 from django.views.generic import CreateView, ListView, DeleteView
-
 from shop_app.cart.cart import Cart
 from shop_app.forms import RegisterForm, PurchaseForm, ReturnForm
-from shop_app.mixins import SuperUserRequiredMixin
+from shop_app.mixins import SuperUserRequiredMixin, PageCounterReloadMixin
 from shop_app.models import Product, Purchase, Return
 
 
-class ProductListView(LoginRequiredMixin, ListView):
+class ProductListView(LoginRequiredMixin, PageCounterReloadMixin, ListView):
     template_name = 'index.html'
     queryset = Product.objects.all()
     extra_context = {'form': PurchaseForm}
+
+    def get(self, request, *args, **kwargs):
+        self.check_reload(request)
+        message = self.request.session.get('message')
+        if message:
+            self.extra_context['message'] = "Это был уже чётвертый раз!"
+        return super().get(self, request, *args, **kwargs)
 
 
 class RegisterView(CreateView):
@@ -59,9 +65,13 @@ class PurchaseCreateView(LoginRequiredMixin, CreateView):
         return HttpResponseRedirect(reverse_lazy('index'))
 
 
-class ProfileListView(LoginRequiredMixin, ListView):
+class ProfileListView(LoginRequiredMixin, PageCounterReloadMixin, ListView):
     model = 'ProfileListView'
     template_name = 'profile.html'
+
+    def get(self, request, *args, **kwargs):
+        self.check_reload(request)
+        return super().get(self, request, *args, **kwargs)
 
     def get_queryset(self):
         return Purchase.objects.filter(user=self.request.user)
