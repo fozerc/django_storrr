@@ -20,10 +20,15 @@ class Product(models.Model):
         return f"Name: {self.name}, Price:  {self.price}, Amount: {self.quantity}"
 
 
-class Purchase(models.Model):
-    user = models.ForeignKey(ShopUser, on_delete=models.CASCADE, blank=True, null=True)
-    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+class ProductForPurchase(models.Model):
+    product = models.OneToOneField(Product, on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+
+class Purchasing(models.Model):
+    user = models.ForeignKey(ShopUser, on_delete=models.CASCADE)
+    products = models.ForeignKey(ProductForPurchase, on_delete=models.CASCADE, related_name='purchase')
     created_at = models.DateTimeField(auto_now_add=True)
 
     @property
@@ -32,4 +37,4 @@ class Purchase(models.Model):
 
 
 class Return(models.Model):
-    purchase = models.OneToOneField(Purchase, on_delete=models.CASCADE, related_name='ret')
+    purchase = models.OneToOneField(ProductForPurchase, on_delete=models.CASCADE, related_name='ret')

@@ -25,7 +25,7 @@ from django.conf.urls.static import static
 from shop_app.cart.cart import Cart
 from shop_app.views import RegisterView, ProductListView, PurchaseCreateView, ProfileListView, ReturnCreateView, \
     ReturnApproveDeleteView, ReturnDeclineDeleteView, ProductCreateView, ReturnListView, AddToCartView, CartListView, \
-    RemoveFromCartView
+    RemoveFromCartView, PurchaseFromCartCreateView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -43,6 +43,7 @@ urlpatterns = [
     path('add-to-cart/', AddToCartView.as_view(), name='add_to_cart'),
     path('cart/', CartListView.as_view(), name='cart_list'),
     path('delete-from-cart/<int:product_id>', RemoveFromCartView.as_view(), name='delete_from_cart'),
+    path('purchase-cart/',  PurchaseFromCartCreateView.as_view(), name='buy_from_cart'),
     path('api/', include('shop_app.api.urls'))
               ]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 

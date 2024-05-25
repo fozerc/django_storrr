@@ -7,7 +7,7 @@ from rest_framework.response import Response
 
 from shop_app.api.permissions import IsAdminOrReadOnly, IsAdminReturnActions
 from shop_app.api.serializers import RegisterSerializer, ProductSerializer, PurchaseSerializer, ReturnSerializer
-from shop_app.models import ShopUser, Product, Purchase, Return
+from shop_app.models import ShopUser, Product, ProductForPurchase, Return
 
 
 class RegisterApiView(CreateAPIView):
@@ -24,12 +24,12 @@ class ProductModelViewSet(viewsets.ModelViewSet):
 
 
 class PurchaseModelViewSet(viewsets.ModelViewSet):
-    queryset = Purchase.objects.all()
+    queryset = ProductForPurchase.objects.all()
     serializer_class = PurchaseSerializer
     http_method_names = ['get', 'post']
 
     def get_queryset(self):
-        return Purchase.objects.filter(user=self.request.user)
+        return ProductForPurchase.objects.filter(user=self.request.user)
 
     def perform_create(self, serializer):
         product = serializer.validated_data['product']

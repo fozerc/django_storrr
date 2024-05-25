@@ -1,7 +1,7 @@
 from django.core.validators import MinValueValidator
 from django.db.models import Q
 from rest_framework import serializers
-from shop_app.models import ShopUser, Product, Purchase, Return
+from shop_app.models import ShopUser, Product, ProductForPurchase, Return
 
 
 class RegisterSerializer(serializers.ModelSerializer):
@@ -33,7 +33,7 @@ class PurchaseSerializer(serializers.ModelSerializer):
     quantity = serializers.IntegerField(required=True, validators=[MinValueValidator(0)])
 
     class Meta:
-        model = Purchase
+        model = ProductForPurchase
         fields = ['id', 'product', 'quantity']
 
     def validate(self, attrs):

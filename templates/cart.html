@@ -9,10 +9,16 @@
     {% for product in products %}
     	Product name: {{ product.name }} <br>
         Product price: {{ product.price }} <br>
-        Product quantity: {{ product.quantity }} <br>
+        Product quantity: {{ product.cart_quantity }} <br>
         <form action="{% url "delete_from_cart" product.pk %}" method="post">
             {% csrf_token %}
             <input type="submit" value="Delete product from cart">
+        </form>
+        <form action="{% url "buy_from_cart" %}" method="post" >
+            {{ form }}
+            {% csrf_token %}
+            <input type="hidden" name="products_from_cart" value="{{ object_list }}">
+            <input type="submit" value="Buy">
         </form>
         <br>
     {% endfor %}

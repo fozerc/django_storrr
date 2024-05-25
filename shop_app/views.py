@@ -8,9 +8,9 @@ from django.urls import reverse_lazy
 from django.views import View
 from django.views.generic import CreateView, ListView, DeleteView
 from shop_app.cart.cart import Cart
-from shop_app.forms import RegisterForm, PurchaseForm, ReturnForm
+from shop_app.forms import RegisterForm, PurchaseForm, ReturnForm, PurchaseFromCartForm
 from shop_app.mixins import SuperUserRequiredMixin, PageCounterReloadMixin
-from shop_app.models import Product, Purchase, Return
+from shop_app.models import Product, ProductForPurchase, Return
 
 
 class ProductListView(LoginRequiredMixin, PageCounterReloadMixin, ListView):
@@ -65,6 +65,27 @@ class PurchaseCreateView(LoginRequiredMixin, CreateView):
         return HttpResponseRedirect(reverse_lazy('index'))
 
 
+class PurchaseFromCartCreateView(LoginRequiredMixin, CreateView):
+    queryset = Product.objects.all()
+    form_class = PurchaseFromCartForm
+    success_url = '/'
+    template_name = 'cart.html'
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['request'] = self.request
+        return kwargs
+
+    def form_valid(self, form):
+        purchase = form.save(commit=False)
+        user = self.request.user
+        products = form.products
+        products_price = form.products_price
+        purchase.user = user
+        purchase.products = products
+        user.user_wallet -= products_price
+
+
 class ProfileListView(LoginRequiredMixin, PageCounterReloadMixin, ListView):
     model = 'ProfileListView'
     template_name = 'profile.html'
@@ -74,7 +95,7 @@ class ProfileListView(LoginRequiredMixin, PageCounterReloadMixin, ListView):
         return super().get(self, request, *args, **kwargs)
 
     def get_queryset(self):
-        return Purchase.objects.filter(user=self.request.user)
+        return ProductForPurchase.objects.filter(user=self.request.user)
 
 
 class ReturnCreateView(LoginRequiredMixin, CreateView):
@@ -124,7 +145,6 @@ class CartListView(ListView, LoginRequiredMixin):
         for key, value in cart.cart.items():
             product = Product.objects.get(id=key)
             product.cart_quantity = value["quantity"]
-            product.cart_price = value["quantity"] * product.price
             products.append(product)
         return render(request, 'cart.html', {'products': products})
 

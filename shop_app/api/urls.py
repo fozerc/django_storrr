@@ -10,6 +10,6 @@ router.register(r'returns', ReturnModelViewSet)
 
 urlpatterns = [
     path('token/', obtain_auth_token, name='token'),
-    path('register/', RegisterApiView.as_view(), name='register'),
+    path('register-api/', RegisterApiView.as_view(), name='register-api'),
     path('', include(router.urls))
 ]

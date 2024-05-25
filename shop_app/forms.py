@@ -6,7 +6,7 @@ from django import forms
 from django.utils.timezone import now
 
 from shop.settings import RETURN_ALLOWED_TIME
-from shop_app.models import ShopUser, Purchase, Product, Return
+from shop_app.models import ShopUser, ProductForPurchase, Product, Return, Purchasing
 
 
 class RegisterForm(UserCreationForm):
@@ -17,8 +17,8 @@ class RegisterForm(UserCreationForm):
 
 class PurchaseForm(forms.ModelForm):
     class Meta:
-        model = Purchase
-        fields = ('quantity',)
+        model = ProductForPurchase
+        exclude = ('product',)
 
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request', None)
@@ -53,6 +53,54 @@ class PurchaseForm(forms.ModelForm):
             self.add_error(None, 'You have not enough money')
 
 
+class PurchaseFromCartForm(forms.ModelForm):
+    class Meta:
+        model = Purchasing
+        exclude = ('products',)
+
+    def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop('request', None)
+        super().__init__(*args, **kwargs)
+
+    def clean(self):
+        cleaned_data = super().clean()
+        cart = self.request.cart.cart
+        products = self.check_products_exist(cart)
+        quantities = list(cart.values())
+        self.check_products_quantity(products, quantities)
+        self.products_price = self.check_user_wallet(products, quantities)
+        self.products = products
+        self.quantities = quantities
+
+    def check_products_exist(self, cart):
+        products = []
+        for product_id in cart:
+            try:
+                product = Product.objects.get(pk=product_id)
+                products.append(product)
+            except Product.DoesNotExist:
+                messages.error(self.request, "You're trying to buy a non-existent product")
+                raise forms.ValidationError("You're trying to buy a non-existent product")
+        return products
+
+    def check_products_quantity(self, products, quantities):
+        for product, quantity in zip(products, quantities):
+            quantity_int = int(quantity['quantity'])
+            if quantity_int > product.quantity:
+                messages.error(self.request, 'Not enough quantity available')
+                self.add_error(None, 'Not enough quantity available')
+
+    def check_user_wallet(self, products, quantities):
+        products_price = []
+        for product, quantity in zip(products, quantities):
+            quantity_int = int(quantity['quantity'])
+            products_price.append(product.price * quantity_int)
+        if sum(products_price) > self.request.user.user_wallet:
+            messages.error(self.request, 'You have not enough money')
+            self.add_error(None, 'You have not enough money')
+        return products_price
+
+
 class ReturnForm(forms.ModelForm):
     class Meta:
         model = Return
@@ -72,8 +120,8 @@ class ReturnForm(forms.ModelForm):
     def check_purchase_exist(self):
         purchase_id = self.data.get('purchase_id')
         try:
-            purchase = Purchase.objects.get(pk=purchase_id)
-        except Purchase.DoesNotExist:
+            purchase = ProductForPurchase.objects.get(pk=purchase_id)
+        except ProductForPurchase.DoesNotExist:
             messages.error(self.request, 'Purchase does not exist')
             raise forms.ValidationError('Purchase does not exist')
         return purchase
